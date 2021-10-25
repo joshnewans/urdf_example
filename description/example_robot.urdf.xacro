@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="robot">
+
+    <!-- This is an example of a URDF. -->
+    <!-- As we move through the file, new things to note will be pointed out. -->
+    <!-- It's not meant an example of GOOD design, but an example of some of the various features of URDF/xacro. -->
+
+
+
+    <!-- This will include all the contents of example_include.xacro first. Go check it out! -->
+    <xacro:include filename="example_include.xacro" />
+
+
+
+    <!-- This first link called "world" is empty -->
+    <link name="world"></link>
+
+
+    <!-- A simple fixed joint from our empty world link, to our base. -->
+    <!-- The base origin is offset from the world origin. -->
+    <joint name="base_joint" type="fixed">
+        <origin xyz="1.5 1.0 0" rpy="0 0 0"/>
+        <parent link="world"/>
+        <child link="base_link"/>        
+    </joint>
+
+
+    <!-- base_link is a large rectangular plate. Some things to note: -->
+    <!-- - We set the visual origin Z to half the box height, so that the link origin sits at the bottom of the box -->
+    <!-- - We set the collision to be identical to the visual -->
+    <!-- - We specified the colour manually (but still need to enter a name) -->
+    <!-- - We specified all the inertial parameters manually -->
+    <link name="base_link">
+        <visual>
+            <origin xyz="0 0 0.05" rpy="0 0 0"/>
+            <geometry>
+                <box size="2.5 1.5 0.1" />
+            </geometry>
+            <material name="green">
+                <color rgba="0.2 1 0.2 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0.05" rpy="0 0 0"/>
+            <geometry>
+                <box size="2.5 1.5 0.1" />
+            </geometry>
+        </collision>
+        <inertial>
+            <origin xyz="0 0 0.05" rpy="0 0 0"/>
+            <mass value="12" />
+            <inertia ixx="2.26" ixy="0.0" ixz="0.0" iyy="6.26" iyz="0.0" izz="8.5" />
+        </inertial>
+    </link>
+
+
+
+    <!-- slider_joint lets slider_link move back and forth along the top of the base in one dimension.  -->
+    <!-- - Origin is set to one of the top edges of the base_link box, so that our link skims across the top  -->
+    <!-- - It moves along the X axis -->
+    <!-- - We need to specify limits for the motion -->
+    <joint name="slider_joint" type="prismatic">
+        <origin xyz="-1.25 0 0.1" rpy="0 0 0"/>
+        <parent link="base_link"/>
+        <child link="slider_link"/>
+        <axis xyz="1 0 0"/>
+        <limit lower="0" upper="2" velocity="100" effort="100"/> 
+    </joint>
+
+
+    <!-- slider_link is the box skimming across the top of the base. Its parameters are similar to the base_link, however: -->
+    <!-- - Instead of explicitly describing a colour, it uses the named material "blue". It knows about "blue" that material was included in example_include.xacro. -->
+    <!-- - Instead of explicitly describing the inertia, we use a macro that was defined in the example_include.xacro -->
+
+    <link name="slider_link">
+        <visual>
+            <origin xyz="0 0 0.075" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.5 0.25 0.15" />
+            </geometry>
+            <material name="blue" />
+        </visual>
+        <collision>
+            <origin xyz="0 0 0.075" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.5 0.25 0.15" />
+            </geometry>
+        </collision>
+        <xacro:inertial_box mass="0.5" x="0.5" y="0.25" z="0.15">
+            <origin xyz="0 0 0.075" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+
+
+
+    <!-- arm_joint describes the rotation of the arm and is centred around the top corner of the slider box. -->
+    <!-- - The axis of rotation is -1 in Y, so that positive is "up" -->
+    <!-- - The upper limit uses xacro's mathematical features -->
+    <joint name="arm_joint" type="revolute">
+        <origin xyz="0.25 0 0.15" rpy="0 0 0"/>
+        <parent link="slider_link"/>
+        <child link="arm_link"/>
+        <axis xyz="0 -1 0"/>
+        <limit lower="0" upper="${pi/2}" velocity="100" effort="100"/> 
+    </joint>
+
+
+    <!-- arm_link describes the arm -->
+    <!-- - We use the "property" feature to define the arm length and radius and use them multiple times -->
+    <!-- - The visual/collision origin is set to halfway along the length (similar to the box), but also with a rotation (again using the mathematical features). -->
+    <!--   This is because the cylinder extends along the Z axis by default, but we want it to be along the X axis (when the joint is at 0) -->
+
+    <xacro:property name="arm_length" value="2" />
+    <xacro:property name="arm_radius" value="0.02" />
+    <link name="arm_link">
+        <visual>
+            <origin xyz="${arm_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+            <geometry>                
+                <cylinder length="${arm_length}" radius="${arm_radius}" />
+            </geometry>
+            <material name="orange" />
+        </visual>
+        <collision>
+            <origin xyz="${arm_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+            <geometry>
+                <cylinder length="${arm_length}" radius="${arm_radius}" />
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="1.0" length="${arm_length}" radius="${arm_radius}">
+            <origin xyz="${arm_length/2} 0 0" rpy="0 ${pi/2} 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+
+    <!-- camera_joint describes where the camera is relative to the arm -->
+    <!-- - Even though the camera isn't moving relative to the arm, it will probably be helpful to have its own link/frame rather than just adding more visuals to the arm -->
+    <!-- - For this example, the camera_link origin will be at the centre of the camera's "sensor" -->
+    <joint name="camera_joint" type="fixed">
+        <origin xyz="${arm_length} 0 ${arm_radius + 0.075}" rpy="0 0 0"/>
+        <parent link="arm_link"/>
+        <child link="camera_link"/>        
+    </joint>
+
+
+    <!-- camera_link describes the camera at the end of the arm -->
+    <!-- - It has multiple visual elements, which ultimately get combined together -->
+    <!-- - Even if we specify different materials, RViz will just colour them all the same as the first -->
+    <!-- - Although we could also specify multiple collision geometries, instead we just use a single box that encompasses the whole camera -->
+    <link name="camera_link">
+        <visual>
+            <origin xyz="-0.03 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.06 0.15 0.15" />
+            </geometry>
+            <material name="white" />
+        </visual>
+        <visual>
+            <origin xyz="0.03 0 0" rpy="0 ${pi/2} 0"/>
+            <geometry>
+                <cylinder length="0.06" radius="0.04" />
+            </geometry>
+            <material name="blue" />
+        </visual>
+        <collision>
+            <origin xyz="0.0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.12 0.15 0.15" />
+            </geometry>
+        </collision>
+        <xacro:inertial_box mass="0.1" x="0.12" y="0.15" z="0.15">
+            <origin xyz="0.0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+
+
+
+</robot>
