@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- This file demonstrates the use of some <gazebo> tags -->
+
+    <!-- To include it add the following line -->
+    <!-- <xacro:include filename="example_gazebo.xacro" /> -->
+
+
+
+    <!-- Gazebo is unable to use the same <material> tags that are already in the URDF (that RViz uses). -->
+    <!-- Instead, we need to add gazebo tags for our links that refer to Gazebo materials -->
+
+
+    <gazebo reference="base_link">
+        <material>Gazebo/Green</material>
+    </gazebo>
+
+    <gazebo reference="slider_link">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+
+    <gazebo reference="arm_link">
+        <material>Gazebo/Orange</material>
+    </gazebo>
+
+
+
+
+    <!-- Gazebo requires the use of plugins to interact with other systems such as ROS. -->
+
+
+    <!-- This plugin will publish the joint_states for the selected joints 
+            (which robot_state_publisher can then use to broadcast the approprate tf). -->
+
+    <gazebo>
+        <plugin name="gazebo_ros_joint_state_publisher"
+            filename="libgazebo_ros_joint_state_publisher.so">
+            <update_rate>20</update_rate>
+            <joint_name>slider_joint</joint_name>
+            <joint_name>arm_joint</joint_name>
+        </plugin>
+    </gazebo>
+
+
+    <!-- This plugin will read a JointTrajectory message from the /set_joint_trajectory topic 
+            and move the machine accordingly. It's a bit clunky but it works. -->
+    <!-- You'll probably want to add damping to the joints to stop them it flopping around. 
+            e.g. <dynamics damping="10.0" friction="10.0"/> -->
+    <!-- Here's an example message to publish to test it:
+            ros2 topic pub -1 /set_joint_trajectory trajectory_msgs/msg/JointTrajectory  '{header: {frame_id: world}, joint_names: [slider_joint, arm_joint], points: [  {positions: {0.8,0.6}} ]}' -->
+    <gazebo>
+        <plugin name="gazebo_ros_joint_pose_trajectory"
+            filename="libgazebo_ros_joint_pose_trajectory.so">
+            <update_rate>2</update_rate>
+        </plugin>
+    </gazebo>
+
+
+
+
+
+
+
+    <!-- The next section shows an example of adding a sensor, in this case a depth camera. -->
+
+    <!-- Due to a quirk of how cameras work, an extra joint/link is required to create an
+            "optical frame" for the sensor. That isn't the focus for this tutorial, but you can
+            look at https://www.ros.org/reps/rep-0103.html#suffix-frames for slightly more information. -->
+
+    
+    
+    <!-- First, create the link and joint for the optical frame -->
+
+    <joint name="camera_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="-1.571 0 -1.571" />
+        <parent link="camera_link" />
+        <child link="camera_link_optical" />
+    </joint>
+
+    <link name="camera_link_optical"></link>
+
+
+    <!-- Add a gazebo tag for the ORIGINAL camera_link (but in the plugin we reference the optical frame so that ROS can orient things correctly) -->
+    <!-- Within the gazebo tag we have the sensor tag, and inside that there is (among other things) the camera tag with the camera parameters, 
+            and the plugin tag with some extra parameters the plugin needs. -->
+    <!-- Note that although visualise is set to true, it won't actually visualise the depth camera in gazebo. To see the preview, 
+            try swapping "depth" to "camera"-->
+    <gazebo reference="camera_link">
+        <sensor type="depth" name="my_camera">
+            <update_rate>20</update_rate>
+            <visualize>true</visualize>
+            <camera name="cam">
+                <horizontal_fov>1.3962634</horizontal_fov>
+                <image>
+                    <width>640</width>
+                    <height>480</height>
+                    <format>R8B8G8</format>
+                </image>
+                <clip>
+                    <near>0.02</near>
+                    <far>300</far>
+                </clip>
+                <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.007</stddev>
+                </noise>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <frame_name>camera_link_optical</frame_name>
+                <min_depth>0.1</min_depth>
+                <max_depth>500</max_depth>
+            </plugin>
+        </sensor>
+    </gazebo>
+
+
+
+
+</robot>
