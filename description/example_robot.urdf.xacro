@@ -64,7 +64,8 @@
         <parent link="base_link"/>
         <child link="slider_link"/>
         <axis xyz="1 0 0"/>
-        <limit lower="0" upper="2" velocity="100" effort="100"/> 
+        <limit lower="0" upper="2" velocity="100" effort="100"/>
+        <dynamics damping="10.0" friction="10.0"/> <!-- stops the joint flopping around in Gazebo (video #8) -->
     </joint>
 
 
@@ -101,7 +102,8 @@
         <parent link="slider_link"/>
         <child link="arm_link"/>
         <axis xyz="0 -1 0"/>
-        <limit lower="0" upper="${pi/2}" velocity="100" effort="100"/> 
+        <limit lower="0" upper="${pi/2}" velocity="100" effort="100"/>
+        <dynamics damping="10.0" friction="10.0"/>
     </joint>
 
 

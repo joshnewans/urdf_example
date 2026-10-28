@@ -1,0 +1,79 @@
+<?xml version="1.0" ?>
+<!-- World for the new Gazebo (Harmonic). Replaces the Gazebo Classic test_world.world.
+     Specifying any plugin means we must also list the default ones (physics, user commands, scene broadcaster).
+     The Sensors plugin is what makes the robot's camera work. -->
+<sdf version="1.8">
+  <world name="empty">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- A few simple objects for the camera to look at (stand-ins for the barrel/cone/wall in video #8) -->
+    <model name="orange_barrel">
+      <pose>4.5 1.0 0.45 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>5</mass></inertial>
+        <collision name="c"><geometry><cylinder><radius>0.3</radius><length>0.9</length></cylinder></geometry></collision>
+        <visual name="v">
+          <geometry><cylinder><radius>0.3</radius><length>0.9</length></cylinder></geometry>
+          <material><ambient>1 0.4 0 1</ambient><diffuse>1 0.4 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="ball">
+      <pose>4.0 2.2 0.25 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>1</mass></inertial>
+        <collision name="c"><geometry><sphere><radius>0.25</radius></sphere></geometry></collision>
+        <visual name="v">
+          <geometry><sphere><radius>0.25</radius></sphere></geometry>
+          <material><ambient>0.1 0.3 1 1</ambient><diffuse>0.1 0.3 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="brick_wall">
+      <static>true</static>
+      <pose>6.0 1.0 1.0 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.2 4 2</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 4 2</size></box></geometry>
+          <material><ambient>0.6 0.2 0.15 1</ambient><diffuse>0.6 0.2 0.15 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

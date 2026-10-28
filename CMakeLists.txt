@@ -34,7 +34,12 @@ endif()
 
 
 install(
-  DIRECTORY description launch worlds
+  DIRECTORY description launch worlds config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  FILES view_robot.rviz view_with_camera.rviz
   DESTINATION share/${PROJECT_NAME}
 )
 
